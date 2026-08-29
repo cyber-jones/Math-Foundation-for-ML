@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Section 6 - Math Foundation for ML</title>
+    <style>
+        /* --- Base Styles --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f8; padding: 30px; color: #333; line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 1.8em; }
+        
+        /* --- Score Board Style --- */
+        .score-board {
+            display: flex; justify-content: space-around; background: white;
+            padding: 15px; margin-bottom: 25px; border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e1e4e8;
+        }
+        .score-item { text-align: center; }
+        .score-val { font-size: 1.5em; font-weight: bold; display: block; }
+        .score-lbl { font-size: 0.85em; color: #7f8c8d; text-transform: uppercase; font-weight: 600; }
+        
+        .c-purple { color: #8e44ad; }
+        .c-green { color: #27ae60; }
+        .c-red { color: #e74c3c; }
+        .c-grey { color: #7f8c8d; }
+
+        .btn-reset-container { text-align: center; margin-bottom: 30px; }
+        .btn-reset { 
+            background-color: #34495e; color: white; border: none; padding: 8px 16px; 
+            border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; 
+            transition: 0.2s; 
+        }
+        .btn-reset:hover { background-color: #2c3e50; }
+
+        /* --- Question Card --- */
+        .question-card { 
+            background: white; padding: 25px; margin-bottom: 25px; 
+            border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e1e4e8; 
+        }
+
+        .q-header { font-weight: 700; color: #7f8c8d; margin-bottom: 15px; font-size: 0.9em; text-transform: uppercase; }
+        .q-body { font-size: 1.2em; margin-bottom: 20px; color: #2c3e50; font-weight: 500; }
+        
+        /* Images */
+        .question-card img, .feedback-text img, .overall-explanation img {
+            max-width: 100% !important; height: auto !important; display: block;
+            margin: 15px auto; border-radius: 6px; cursor: zoom-in;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .q-answers { list-style: none; padding: 0; }
+        
+        /* --- Option Styles --- */
+        .option { 
+            padding: 15px 20px; border: 2px solid #e1e4e8; margin-bottom: 12px; border-radius: 8px; 
+            cursor: pointer; transition: all 0.2s ease; background: white; 
+            display: flex; flex-direction: column;
+        }
+        
+        .option-content { display: flex; align-items: flex-start; gap: 15px; width: 100%; }
+
+        .option:hover:not(.answered) { border-color: #bdc3c7; background-color: #f8f9fa; }
+        .option.selected:not(.answered) { border-color: #34495e; background-color: #edf2f7; }
+        
+        /* Icons */
+        .chk { 
+            font-size: 1.1em; flex-shrink: 0; width: 24px; height: 24px; 
+            display: flex; align-items: center; justify-content: center; 
+            border: 2px solid #bdc3c7; background: white; margin-top: 2px;
+        }
+        .chk.radio { border-radius: 50%; }
+        .chk.checkbox { border-radius: 4px; }
+        
+        .option.selected .chk { border-color: #2c3e50; background: #2c3e50; }
+        .option.selected .chk::after { content: ''; display: block; width: 10px; height: 10px; background: white; border-radius: 50%; }
+
+        /* --- Feedback Section --- */
+        .feedback-text {
+            margin-top: 15px; padding: 12px 15px; font-size: 0.95em;
+            border-left: 4px solid; background-color: rgba(255,255,255,0.5);
+            border-radius: 0 4px 4px 0; animation: fadeIn 0.3s ease;
+            display: none;
+        }
+        .feedback-text:empty { display: none !important; }
+
+        /* --- Overall Explanation Section --- */
+        .overall-explanation {
+            display: none; margin-top: 25px; padding: 20px;
+            background-color: #f0f7ff; border: 1px solid #cce5ff;
+            border-radius: 8px; color: #333; animation: fadeIn 0.5s ease;
+            overflow-wrap: break-word; 
+        }
+        .overall-explanation h4 {
+            margin: 0 0 10px 0; color: #0056b3; font-size: 1em;
+            text-transform: uppercase; font-weight: 700;
+        }
+
+        /* --- States After Submit --- */
+        .option.user-wrong { border-color: #e74c3c; background-color: #fdecea; cursor: default; }
+        .option.user-wrong .chk { border-color: #e74c3c; background: #e74c3c; }
+        .option.user-wrong .chk::after { content: '✕'; color: white; background: none; font-size: 16px; font-weight: bold; width: auto; height: auto; }
+        .option.user-wrong .feedback-text { display: block; border-color: #c0392b; color: #c0392b; background-color: rgba(231, 76, 60, 0.1); }
+
+        .option.show-correct { border-color: #27ae60; background-color: #e8f8f5; cursor: default; }
+        .option.show-correct .chk { border-color: #27ae60; background: #27ae60; }
+        .option.show-correct .chk::after { content: '✓'; color: white; background: none; font-size: 16px; font-weight: bold; width: auto; height: auto; }
+        .option.show-correct .feedback-text { display: block; border-color: #27ae60; color: #1e8449; background-color: rgba(39, 174, 96, 0.1); font-weight: 500; }
+
+        .btn-submit-container { margin-top: 20px; }
+        .btn-submit { background-color: #2980b9; color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; }
+        .btn-submit:hover { background-color: #2471a3; }
+        .btn-submit:disabled { opacity: 0.7; cursor: default; }
+
+        /* Modal Zoom */
+        .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); }
+        .modal-content { margin: auto; display: block; max-width: 90%; max-height: 90vh; }
+        .close { position: absolute; top: 15px; right: 35px; color: #fff; font-size: 40px; cursor: pointer; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Section 6 - Math Foundation for ML</h1>
+        
+        <div class="score-board">
+            <div class="score-item">
+                <span class="score-val c-purple" id="val-score">0%</span>
+                <span class="score-lbl">Score</span>
+            </div>
+            <div class="score-item">
+                <span class="score-val c-green" id="val-correct">0</span>
+                <span class="score-lbl">Correct</span>
+            </div>
+            <div class="score-item">
+                <span class="score-val c-red" id="val-wrong">0</span>
+                <span class="score-lbl">Wrong</span>
+            </div>
+            <div class="score-item">
+                <span class="score-val c-grey" id="val-remain">0</span>
+                <span class="score-lbl">Remaining</span>
+            </div>
+        </div>
+
+        <div class="btn-reset-container">
+            <button class="btn-reset" onclick="resetQuiz()">Reset Quiz</button>
+        </div>
+        <div id="questions-container"></div>
+    </div>
+
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="img01">
+    </div>
+
+    <script>
+        const quizData = {"quiz_title":"Section 6 - Math Foundation for ML","questions":[{"_class":"assessment","id":144452251,"assessment_type":"multiple-choice","created":"2026-01-21T08:53:37Z","prompt":{"question":"<p>Why is mathematics important in Machine Learning?</p>","relatedLectureIds":"","feedbacks":["","","","<p>Machine Learning models work entirely with numbers. Math provides the language that allows models to process data, learn patterns, and make predictions.</p>"],"answers":["<p>It helps in designing user interfaces</p>","<p>It replaces programming languages</p>","<p>It is used only for visualizations</p>","<p>It allows models to understand and learn from numerical data</p>"]},"correct_response":["d"],"updated":"2026-01-21T08:53:37Z","section":""},{"_class":"assessment","id":144452265,"assessment_type":"multiple-choice","created":"2026-01-21T08:54:52Z","prompt":{"question":"<p>In Machine Learning, a dataset is most commonly represented as which mathematical structure?</p>","relatedLectureIds":"","feedbacks":["","","<p>A dataset usually contains multiple samples and multiple features, which naturally form a matrix with rows as samples and columns as features.</p>",""],"answers":["<p>Scalar</p>","<p>Vector</p>","<p>Matrix</p>","<p>Table</p>"]},"correct_response":["c"],"updated":"2026-01-21T08:54:52Z","section":""},{"_class":"assessment","id":144452277,"assessment_type":"multiple-choice","created":"2026-01-21T08:55:42Z","prompt":{"question":"<p>What best describes a vector in the context of Machine Learning?</p>","relatedLectureIds":"","feedbacks":["","<p>Vectors represent 1D data such as feature values for a single sample or weights in a model.</p>","",""],"answers":["<p>A single number</p>","<p>A collection of values in one dimension</p>","<p>A table with rows and columns</p>","<p>A multi-dimensional cube</p>"]},"correct_response":["b"],"updated":"2026-01-21T08:55:42Z","section":""},{"_class":"assessment","id":144452289,"assessment_type":"multiple-choice","created":"2026-01-21T08:56:45Z","prompt":{"question":"<p>Why does the shape of data matter in Machine Learning computations?</p>","relatedLectureIds":"","feedbacks":["","","<p>For operations like matrix multiplication, dimensions must align correctly. If shapes do not match, computations fail.</p>",""],"answers":["<p>It reduces memory usage</p>","<p>It affects how data is visualized</p>","<p>It ensures mathematical operations between inputs and weights work correctly</p>","<p>It improves data read speed</p>"]},"correct_response":["c"],"updated":"2026-01-21T08:56:45Z","section":""},{"_class":"assessment","id":144452299,"assessment_type":"multiple-choice","created":"2026-01-21T08:57:34Z","prompt":{"question":"<p>Which statistical measure is most robust when a dataset contains extreme outliers?</p>","relatedLectureIds":"","feedbacks":["","","","<p>The median is not heavily affected by extreme values, making it more reliable than the mean when outliers are present.</p>"],"answers":["<p>Range</p>","<p>Variance</p>","<p>Mean</p>","<p>Median</p>"]},"correct_response":["d"],"updated":"2026-01-21T08:57:34Z","section":""},{"_class":"assessment","id":144452307,"assessment_type":"multiple-choice","created":"2026-01-21T08:58:23Z","prompt":{"question":"<p>What does a high standard deviation in a feature usually indicate?</p>","relatedLectureIds":"","feedbacks":["","","<p>A high standard deviation means the values vary a lot from the mean, which can indicate noise or high variability.</p>",""],"answers":["<p>The feature values are tightly clustered</p>","<p>The feature has little importance</p>","<p>The feature values are widely spread</p>","<p>The feature contains no noise</p>"]},"correct_response":["c"],"updated":"2026-01-21T08:58:23Z","section":""},{"_class":"assessment","id":144452317,"assessment_type":"multiple-choice","created":"2026-01-21T08:59:24Z","prompt":{"question":"<p>What is the main purpose of correlation in Machine Learning?</p>","relatedLectureIds":"","feedbacks":["<p>Correlation helps understand how strongly features are related, which is useful for feature selection and detecting multicollinearity.</p>","","",""],"answers":["<p>To measure the strength and direction of relationship between features</p>","<p>To calculate loss values</p>","<p>To normalize data</p>","<p>To remove missing values</p>"]},"correct_response":["a"],"updated":"2026-01-21T08:59:24Z","section":""},{"_class":"assessment","id":144452321,"assessment_type":"multiple-choice","created":"2026-01-21T09:00:26Z","prompt":{"question":"<p>In calculus, what does the slope of a loss function represent during model training?</p>","relatedLectureIds":"","feedbacks":["","","","<p>The slope tells the model how the loss changes with respect to weights, guiding how to adjust them to reduce error.</p>"],"answers":["<p>The number of features</p>","<p>Learning rate</p>","<p>The dataset size</p>","<p>The direction and speed of weight updates</p>"]},"correct_response":["d"],"updated":"2026-01-21T09:00:26Z","section":""},{"_class":"assessment","id":144452329,"assessment_type":"multiple-choice","created":"2026-01-21T09:02:10Z","prompt":{"question":"<p>What is the main goal of gradient descent?</p>","relatedLectureIds":"","feedbacks":["","<p>Gradient descent follows the slope of the loss curve and updates weights step by step to reach the lowest possible loss.</p>","",""],"answers":["<p>To increase model complexity</p>","<p>To move weights in the direction that minimizes loss</p>","<p>To visualize predictions</p>","<p>To calculate probabilities</p>"]},"correct_response":["b"],"updated":"2026-01-21T09:02:10Z","section":""},{"_class":"assessment","id":144452337,"assessment_type":"multiple-choice","created":"2026-01-21T09:02:58Z","prompt":{"question":"<p>Which probability concept answers the question: “What is the chance of an event given that something else has already happened?”</p>","relatedLectureIds":"","feedbacks":["","","<p>Conditional probability updates the likelihood of an event based on known information and is the foundation of algorithms like Naive Bayes.</p>",""],"answers":["<p>Independent probability</p>","<p>Uniform distribution</p>","<p>Conditional probability</p>","<p>Random sampling</p>"]},"correct_response":["c"],"updated":"2026-01-21T09:02:58Z","section":""}]};
+        let answeredQuestions = new Set();
+
+        function smartLinkify(text) {
+            if (!text) return "";
+            const regex = /((?:href|src)=["'])(https?:\/\/[^"']+)["']|(https?:\/\/[^\s<>"']+)/g;
+            let processed = text.replace(regex, (match, prefix, quotedUrl, rawUrl) => {
+                if (prefix) return match; 
+                if (rawUrl) return '<a href="' + rawUrl + '" target="_blank">' + rawUrl + '</a>';
+                return match;
+            });
+            return processed.replace(/\n/g, '<br>');
+        }
+
+        function init() {
+            const container = document.getElementById('questions-container');
+            quizData.questions.forEach((q, index) => {
+                container.appendChild(createQuestionCard(q, index + 1));
+            });
+            setupImageZoom();
+            updateStats(); // Init stats
+        }
+
+        // --- Stats Logic ---
+        function updateStats() {
+            const total = quizData.questions.length;
+            let correct = 0;
+            let wrong = 0;
+            
+            document.querySelectorAll('.question-card.answered').forEach(card => {
+                // Check if user selected the correct option
+                const hasWrong = card.querySelector('.option.user-wrong');
+                if (hasWrong) {
+                    wrong++;
+                } else {
+                    correct++;
+                }
+            });
+
+            const answered = answeredQuestions.size;
+            const remaining = total - answered;
+            const score = answered > 0 ? Math.round((correct / total) * 100) : 0;
+
+            document.getElementById('val-score').innerText = score + '%';
+            document.getElementById('val-correct').innerText = correct;
+            document.getElementById('val-wrong').innerText = wrong;
+            document.getElementById('val-remain').innerText = remaining;
+        }
+
+        function createQuestionCard(qData, qNum) {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.dataset.id = qData.id;
+
+            const prompt = qData.prompt || {};
+            const answers = prompt.answers || [];
+            const correctResponses = qData.correct_response || [];
+            const feedbacks = qData.feedbacks || prompt.feedbacks || [];
+            
+            let overallExplanation = prompt.explanation || "";
+            overallExplanation = smartLinkify(overallExplanation);
+
+            const isMulti = correctResponses.length > 1;
+            card.dataset.correct = JSON.stringify(correctResponses);
+            card.dataset.isMulti = isMulti;
+
+            let optionsHTML = '';
+            answers.forEach((ans, idx) => {
+                const letter = String.fromCharCode(97 + idx); 
+                let ansText = typeof ans === 'string' ? ans : (ans.body || ans.content || '');
+                let contentFeedback = feedbacks[idx] || "";
+                contentFeedback = smartLinkify(contentFeedback);
+                const feedbackHtml = contentFeedback ? '<div class="feedback-text">' + contentFeedback + '</div>' : '';
+
+                optionsHTML += `
+                    <li class="option" data-idx="${idx}" data-letter="${letter}" onclick="selectOption(this)">
+                        <div class="option-content">
+                            <span class="chk ${isMulti ? 'checkbox' : 'radio'}"></span>
+                            <div style="flex:1">${ansText}</div>
+                        </div>
+                        ${feedbackHtml}
+                    </li>`;
+            });
+
+            const qText = prompt.question || prompt.text || '';
+
+            card.innerHTML = `
+                <div class="q-header">Question ${qNum}</div>
+                <div class="q-body">${qText}</div>
+                <ul class="q-answers">${optionsHTML}</ul>
+                <div class="btn-submit-container">
+                    <button class="btn-submit" onclick="submitAnswer(this)">Answer</button>
+                </div>
+                <div class="overall-explanation">
+                    <h4>Overall Explanation</h4>
+                    <div>${overallExplanation}</div>
+                </div>
+            `;
+            return card;
+        }
+
+        function selectOption(el) {
+            const card = el.closest('.question-card');
+            if (card.classList.contains('answered')) return;
+            const isMulti = card.dataset.isMulti === 'true';
+            if (isMulti) {
+                el.classList.toggle('selected');
+            } else {
+                card.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+                el.classList.add('selected');
+            }
+        }
+
+        function submitAnswer(btn) {
+            const card = btn.closest('.question-card');
+            if (card.classList.contains('answered')) return;
+
+            const selectedOpts = card.querySelectorAll('.option.selected');
+            if (selectedOpts.length === 0) return;
+
+            card.classList.add('answered');
+            answeredQuestions.add(card.dataset.id);
+            const correctArr = JSON.parse(card.dataset.correct);
+            btn.disabled = true;
+
+            card.querySelectorAll('.option').forEach(opt => {
+                const letter = opt.dataset.letter;
+                const isCorrect = correctArr.includes(letter);
+                const isSelected = opt.classList.contains('selected');
+                
+                if (isCorrect) {
+                    opt.classList.add('show-correct'); 
+                } else if (isSelected) {
+                    opt.classList.add('user-wrong');
+                }
+            });
+
+            const explanationDiv = card.querySelector('.overall-explanation div');
+            if (explanationDiv && explanationDiv.innerHTML.trim() !== '') {
+                card.querySelector('.overall-explanation').style.display = 'block';
+            }
+            setupImageZoom();
+            updateStats(); // Update Score Board
+        }
+
+        function resetQuiz() {
+            // [MODIFIED] Disabled confirmation dialog
+            // if(!confirm('Reset all answers?')) return; 
+
+            answeredQuestions.clear();
+            document.querySelectorAll('.question-card').forEach(c => {
+                c.classList.remove('answered');
+                c.querySelectorAll('.option').forEach(o => {
+                    o.classList.remove('selected', 'user-wrong', 'show-correct');
+                });
+                c.querySelector('.btn-submit').disabled = false;
+                const exp = c.querySelector('.overall-explanation');
+                if(exp) exp.style.display = 'none';
+            });
+            updateStats();
+            window.scrollTo({top:0, behavior:'smooth'});
+        }
+
+        function setupImageZoom() {
+            const modal = document.getElementById("imageModal");
+            const modalImg = document.getElementById("img01");
+            document.querySelectorAll('img').forEach(img => {
+                if(img.closest('#imageModal')) return;
+                img.onclick = function() {
+                    modal.style.display = "block";
+                    modalImg.src = this.src;
+                }
+            });
+        }
+        function closeModal() { document.getElementById("imageModal").style.display = "none"; }
+        window.onclick = function(e) { if (e.target == document.getElementById("imageModal")) closeModal(); }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
